@@ -113,6 +113,16 @@ char* Z85_decode_unsafe(const char* source, const char* sourceEnd, char* dest)
    return (char*)dst;
 }
 
+size_t Z85_encode_bound(size_t size)
+{
+   return size * 5 / 4;
+}
+
+size_t Z85_decode_bound(size_t size)
+{
+   return size * 4 / 5;
+}
+
 size_t Z85_encode(const char* source, char* dest, size_t inputSize)
 {
    if (!source || !dest || inputSize % 4)
@@ -133,6 +143,19 @@ size_t Z85_decode(const char* source, char* dest, size_t inputSize)
    }
 
    return Z85_decode_unsafe(source, source + inputSize, dest) - dest;
+}
+
+size_t Z85_encode_with_padding_bound(size_t size)
+{
+   if (size == 0) return 0;
+   size = Z85_encode_bound(size);
+   return size + (5 - size % 5) % 5 + 1;
+}
+
+size_t Z85_decode_with_padding_bound(const char* source, size_t size)
+{
+   if (size == 0 || !source || (byte)(source[0] - '0' - 1) > 3) return 0;
+   return Z85_decode_bound(size - 1) - 4 + (source[0] - '0');
 }
 
 size_t Z85_encode_with_padding(const char* source, char* dest, size_t inputSize)

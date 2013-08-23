@@ -39,8 +39,14 @@ extern "C" {
 size_t Z85_encode_with_padding(const char* source, char* dest, size_t inputSize);
 size_t Z85_decode_with_padding(const char* source, char* dest, size_t inputSize);
 
+size_t Z85_encode_with_padding_bound(size_t size);
+size_t Z85_decode_with_padding_bound(const char* source, size_t size);
+
 size_t Z85_encode(const char* source, char* dest, size_t inputSize);
 size_t Z85_decode(const char* source, char* dest, size_t inputSize);
+
+size_t Z85_encode_bound(size_t size);
+size_t Z85_decode_bound(size_t size);
 
 char* Z85_encode_unsafe(const char* source, const char* sourceEnd, char* dest);
 char* Z85_decode_unsafe(const char* source, const char* sourceEnd, char* dest);
