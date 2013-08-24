@@ -33,11 +33,16 @@
 
 #include "z85.h"
 
-typedef char Z85_uint32_t_static_assert[sizeof(unsigned int)  * CHAR_BIT == 32];
-typedef char Z85_uint64_t_static_assert[sizeof(unsigned long) * CHAR_BIT == 64];
+#ifdef _MSC_VER
+typedef unsigned __int64 uint64_t;
+#else
 typedef unsigned long uint64_t;
+#endif
 typedef unsigned int  uint32_t;
 typedef unsigned char byte;
+
+typedef char Z85_uint64_t_static_assert[sizeof(uint64_t) * CHAR_BIT == 64];
+typedef char Z85_uint32_t_static_assert[sizeof(uint32_t) * CHAR_BIT == 32];
 
 #define DIV85(number) ((uint32_t)(((uint64_t)3233857729 * number) >> 32) >> 6)
 
