@@ -33,9 +33,13 @@
 
 #include "z85.h"
 
-typedef char Z85_uint32_t_static_assert[sizeof(unsigned int) * CHAR_BIT == 32];
-typedef unsigned int uint32_t;
+typedef char Z85_uint32_t_static_assert[sizeof(unsigned int)  * CHAR_BIT == 32];
+typedef char Z85_uint64_t_static_assert[sizeof(unsigned long) * CHAR_BIT == 64];
+typedef unsigned long uint64_t;
+typedef unsigned int  uint32_t;
 typedef unsigned char byte;
+
+#define DIV85(number) ((uint32_t)(((uint64_t)3233857729 * number) >> 32) >> 6)
 
 static const char* base85 =
 {
@@ -72,17 +76,18 @@ char* Z85_encode_unsafe(const char* source, const char* sourceEnd, char* dest)
    byte* end = (byte*)sourceEnd;
    byte* dst = (byte*)dest;
    uint32_t value;
+   uint32_t value2;
 
    for (; src != end; src += 4, dst += 5)
    {
       // unpack big-endian frame
       value = (src[0] << 24) | (src[1] << 16) | (src[2] << 8) | src[3];
 
-      dst[4] = base85[value % 85]; value /= 85;
-      dst[3] = base85[value % 85]; value /= 85;
-      dst[2] = base85[value % 85]; value /= 85;
-      dst[1] = base85[value % 85]; value /= 85;
-      dst[0] = base85[value % 85];
+      value2 = DIV85(value); dst[4] = base85[value - value2 * 85]; value = value2;
+      value2 = DIV85(value); dst[3] = base85[value - value2 * 85]; value = value2;
+      value2 = DIV85(value); dst[2] = base85[value - value2 * 85]; value = value2;
+      value2 = DIV85(value); dst[1] = base85[value - value2 * 85]; value = value2;
+      dst[0] = base85[value];
    }
 
    return (char*)dst;
