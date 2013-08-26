@@ -91,8 +91,8 @@ char* Z85_encode_unsafe(const char* source, const char* sourceEnd, char* dest)
       value2 = DIV85(value); dst[4] = base85[value - value2 * 85]; value = value2;
       value2 = DIV85(value); dst[3] = base85[value - value2 * 85]; value = value2;
       value2 = DIV85(value); dst[2] = base85[value - value2 * 85]; value = value2;
-      value2 = DIV85(value); dst[1] = base85[value - value2 * 85]; value = value2;
-      dst[0] = base85[value];
+      value2 = DIV85(value); dst[1] = base85[value - value2 * 85];
+      dst[0] = base85[value2];
    }
 
    return (char*)dst;

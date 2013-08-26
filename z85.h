@@ -36,7 +36,20 @@
 extern "C" {
 #endif
 
+/// @brief Encodes 'inputSize' bytes from 'source' into 'dest'.
+///        If 'inputSize' is not divisible by 4 with no remainder, 'source' is padded.
+///        Destination buffer must be already allocated. Use Z85_encode_with_padding_bound() to
+///        evaluate exact size of the destination buffer.
+/// @param source in, input buffer (binary string to be encoded)
+/// @param dest out, destination buffer
+/// @return the number of printable symbols written into 'dest' or 0 if something goes wrong
 size_t Z85_encode_with_padding(const char* source, char* dest, size_t inputSize);
+
+/// @brief Decodes 'inputSize' printable symbols from 'source' into 'dest',
+///        encoded with Z85_encode_with_padding().
+/// @param source in, input buffer (printable string to be decoded)
+/// @param dest out, destination buffer
+/// @return the number of bytes written into 'dest' or 0 if something goes wrong
 size_t Z85_decode_with_padding(const char* source, char* dest, size_t inputSize);
 
 size_t Z85_encode_with_padding_bound(size_t size);
