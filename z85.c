@@ -44,7 +44,7 @@ typedef unsigned char byte;
 typedef char Z85_uint64_t_static_assert[sizeof(uint64_t) * CHAR_BIT == 64];
 typedef char Z85_uint32_t_static_assert[sizeof(uint32_t) * CHAR_BIT == 32];
 
-#define DIV85(number) ((uint32_t)(((uint64_t)3233857729 * number) >> 32) >> 6)
+#define DIV85(number) ((uint32_t)((3233857729ULL * number) >> 32) >> 6)
 
 static const char* base85 =
 {
