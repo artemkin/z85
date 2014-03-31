@@ -41,7 +41,7 @@ typedef char Z85_uint32_t_static_assert[(sizeof(uint32_t) * CHAR_BIT == 32) * 2 
 
 #define DIV85_MAGIC 3233857729ULL
 // make sure magic constant is 64-bit
-typedef char Z85_uint64_t_static_assert[(sizeof(DIV85_MAGIC) * CHAR_BIT == 64) * 2 - 1];
+typedef char Z85_div85_magic_static_assert[(sizeof(DIV85_MAGIC) * CHAR_BIT == 64) * 2 - 1];
 
 #define DIV85(number) ((uint32_t)((DIV85_MAGIC * number) >> 32) >> 6)
 
