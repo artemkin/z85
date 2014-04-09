@@ -1,5 +1,6 @@
 language: cpp
 compiler:
+  - gcc
   - clang
 script: ./cmake.sh && cd _build && make
 
