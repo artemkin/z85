@@ -49,7 +49,7 @@ std::string encode_with_padding(const char* source, size_t inputSize)
    buf.resize(Z85_encode_with_padding_bound(inputSize));
 
    const size_t encodedBytes = Z85_encode_with_padding(source, &buf[0], inputSize);
-   assert(encodedBytes == buf.size()); &encodedBytes;
+   assert(encodedBytes == buf.size()); (void)encodedBytes;
 
    return buf;
 }
@@ -77,7 +77,7 @@ std::string decode_with_padding(const char* source, size_t inputSize)
    buf.resize(bufSize);
 
    const size_t decodedBytes = Z85_decode_with_padding(source, &buf[0], inputSize);
-   assert(decodedBytes == buf.size()); &decodedBytes;
+   assert(decodedBytes == buf.size()); (void)decodedBytes;
 
    return buf;
 }
