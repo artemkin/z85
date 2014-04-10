@@ -33,5 +33,8 @@ install:
 
   - if [ "$CXX" == "clang++" ]; then export CXX="clang++-3.4"; fi
 
-script: ./cmake.sh && cd _build && make
+script:
+  - pwd
+  - ls -la
+  - ./cmake.sh && cd _build && make
 
