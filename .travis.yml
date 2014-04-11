@@ -4,6 +4,11 @@ compiler:
   - gcc
   - clang
 
+matrix:
+  include:
+    - compiler: gcc
+      env: CFLAGS=--coverage CXXFLAGS=--coverage COVERAGE=1
+
 before_install:
   # g++4.8.1
   - if [ "$CXX" == "g++" ]; then sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test; fi
@@ -16,12 +21,12 @@ before_install:
 install:
   # g++4.8.1
   - if [ "$CXX" = "g++" ]; then sudo apt-get install -qq g++-4.8; fi
-  - if [ "$CXX" = "g++" ]; then export CXX="g++-4.8"; fi
+  - if [ "$CXX" = "g++" ]; then export CXX="g++-4.8" CC="gcc-4.8"; fi
 
   # clang 3.4
   - if [ "$CXX" == "clang++" ]; then sudo apt-get install --allow-unauthenticated -qq clang-3.4; fi
   - if [ "$CXX" == "clang++" ]; then cwd=$(pwd); fi
-  
+
   # install libc++
   - if [ "$CXX" == "clang++" ]; then export CXXFLAGS="-std=c++0x -stdlib=libc++"; fi
   - if [ "$CXX" == "clang++" ]; then svn co --quiet http://llvm.org/svn/llvm-project/libcxx/trunk libcxx; fi
@@ -33,8 +38,14 @@ install:
   - if [ "$CXX" == "clang++" ]; then cd /usr/lib && sudo ln -sf libc++.so.1.0 libc++.so; fi
   - if [ "$CXX" == "clang++" ]; then sudo ln -sf libc++.so.1.0 libc++.so.1 && cd $cwd; fi
 
-  - if [ "$CXX" == "clang++" ]; then export CXX="clang++-3.4"; fi
+  - if [ "$CXX" == "clang++" ]; then export CXX="clang++-3.4" CC="clang-3.4"; fi
+
+  # install cpp-coveralls
+  - if [ -n "$COVERAGE" ]; then sudo pip install cpp-coveralls --use-mirrors; fi
 
 script:
   - ./cmake.sh && cd _build && make && make test
+
+after_success:
+  - if [ -n "$COVERAGE" ]; then coveralls --gcov gcov-4.8 --exclude CMakeFiles --exclude-pattern 'CMake[^\.]*\.c(?:pp)?' --exclude-pattern '[^\.]*\.h'; fi
 
