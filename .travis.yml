@@ -44,6 +44,7 @@ script:
 
 after_success:
 #  - if [ -n "$COVERAGE" ]; then coveralls --gcov gcov-4.8 --exclude CMakeFiles --exclude-pattern 'CMake[^\.]*\.c(?:pp)?' --exclude-pattern '[^\.]*\.h'; fi
+  - cd ..
   - if [ -n "$COVERAGE" ]; then coveralls --gcov gcov-4.8; fi
   - find . -iname "*.gcno"
   - find . -iname "*.gcda"
