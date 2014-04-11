@@ -1,10 +1,13 @@
 language: cpp
 
-compiler:
-  - gcc
-  - clang
+#compiler:
+#  - gcc
+#  - clang
 
 matrix:
+  include:
+    - compiler: clang
+
   include:
     - compiler: gcc
       env: CFLAGS=--coverage CXXFLAGS=--coverage COVERAGE=1
@@ -47,5 +50,6 @@ script:
   - ./cmake.sh && cd _build && make && make test
 
 after_success:
-  - if [ -n "$COVERAGE" ]; then coveralls --gcov gcov-4.8 --exclude CMakeFiles --exclude-pattern 'CMake[^\.]*\.c(?:pp)?' --exclude-pattern '[^\.]*\.h'; fi
+#  - if [ -n "$COVERAGE" ]; then coveralls --gcov gcov-4.8 --exclude CMakeFiles --exclude-pattern 'CMake[^\.]*\.c(?:pp)?' --exclude-pattern '[^\.]*\.h'; fi
+  - if [ -n "$COVERAGE" ]; then coveralls --gcov gcov-4.8; fi
 
