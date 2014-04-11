@@ -20,7 +20,9 @@ install:
 
   # clang 3.4
   - if [ "$CXX" == "clang++" ]; then sudo apt-get install --allow-unauthenticated -qq clang-3.4; fi
-
+  - if [ "$CXX" == "clang++" ]; then cwd=$(pwd); fi
+  
+  # install libc++
   - if [ "$CXX" == "clang++" ]; then export CXXFLAGS="-std=c++0x -stdlib=libc++"; fi
   - if [ "$CXX" == "clang++" ]; then svn co --quiet http://llvm.org/svn/llvm-project/libcxx/trunk libcxx; fi
 
@@ -34,7 +36,5 @@ install:
   - if [ "$CXX" == "clang++" ]; then export CXX="clang++-3.4"; fi
 
 script:
-  - pwd
-  - ls -la
-  - ./cmake.sh && cd _build && make
+  - ./cmake.sh && cd _build && make && make test
 
