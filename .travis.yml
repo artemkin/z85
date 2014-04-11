@@ -36,7 +36,6 @@ install:
   - if [ "$CXX" == "clang++" ]; then export CXX="clang++-3.4" CC="clang-3.4"; fi
 
   # install cpp-coveralls
-  #    env: CFLAGS=--coverage CXXFLAGS=--coverage COVERAGE=1
   - if [ -n "$COVERAGE" ]; then sudo pip install cpp-coveralls --use-mirrors; fi
 
 script:
@@ -44,8 +43,8 @@ script:
 
 after_success:
   - cd ..
-  - if [ -n "$COVERAGE" ]; then coveralls --gcov gcov-4.8 --exclude test.cpp --exclude CMakeFiles --exclude-pattern 'CMake[^\.]*\.c(?:pp)?' --exclude-pattern '[^\.]*\.h'; fi
-  - find . -iname "*.gcno"
-  - find . -iname "*.gcda"
-  - find . -iname "*.gcov"
+  - if [ -n "$COVERAGE" ]; then coveralls --gcov gcov-4.8 -e test -e _build -E ".*\.(h|hpp)$"; fi
+#  - find . -iname "*.gcno"
+#  - find . -iname "*.gcda"
+#  - find . -iname "*.gcov"
 
