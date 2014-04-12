@@ -1,5 +1,6 @@
 
 #include <cstring>
+#include <cstdlib>
 
 #include "lest.hpp"
 #include "z85.h"
@@ -7,39 +8,62 @@
 
 using namespace std;
 
-void test_nopadding(const char* data, size_t dataSize, const char* text)
+
+const string c_badfood = "baadfoodbaadfoodbaadfoodbaadfood";
+
+// Checks for buffer overruns
+class strict_buf
 {
-   const size_t bufSize = 32 * 1024;
-   if (dataSize > bufSize * 0.7)
+   string m_buf;
+
+public:
+   explicit strict_buf(size_t i_size)
+      : m_buf(c_badfood + string(i_size + 1, '\0') + c_badfood)
    {
-      EXPECT(false);
-      return;
    }
 
-   EXPECT(dataSize % 4 == 0);
-   char encodedBuf[bufSize] = {0};
-   const size_t encodedBytes = Z85_encode(data, encodedBuf, dataSize);
-   EXPECT(encodedBytes % 5 == 0);
-   EXPECT(encodedBytes == (dataSize * 5 / 4));
-   EXPECT(!strcmp(text, encodedBuf));
+   char* p()
+   {
+      return &m_buf[0] + c_badfood.size();
+   }
 
-   char decodedBuf[bufSize] = {0};
-   const size_t decodedBytes = Z85_decode(encodedBuf, decodedBuf, encodedBytes);
-   EXPECT(decodedBytes % 4 == 0);
-   EXPECT(decodedBytes == dataSize);
-   EXPECT(!memcmp(data, decodedBuf, dataSize));
+   std::string str() const
+   {
+      size_t count = c_badfood.size();
 
-   char encodedBufWithPadding[bufSize] = {0};
-   const size_t encodedBytesWithPadding = Z85_encode_with_padding(data, encodedBufWithPadding, dataSize);
-   EXPECT(encodedBytes + (encodedBytes ? 1 : 0) == encodedBytesWithPadding); // +one byte for padding count
-   EXPECT(encodedBytesWithPadding == 0 || encodedBufWithPadding[0] == '4');  // nothing should be padded, so 4 count
-   EXPECT(!memcmp(encodedBuf, encodedBufWithPadding + 1, encodedBytes));
+      return m_buf.substr(count, m_buf.size() - 2 * count - 1);
+   }
 
-   char decodedBufWithPadding[bufSize] = {0};
-   const size_t decodedBytesWithPadding = Z85_decode_with_padding(encodedBufWithPadding, decodedBufWithPadding, encodedBytesWithPadding);
-   EXPECT(decodedBytesWithPadding % 4 == 0);
-   EXPECT(decodedBytesWithPadding == dataSize);
-   EXPECT(!memcmp(data, decodedBufWithPadding, dataSize));
+   ~strict_buf()
+   {
+      size_t count = c_badfood.size();
+
+      const bool strict_buf_bad_food =
+         m_buf.substr(0, count)           != c_badfood ||
+         m_buf[m_buf.size()-1-count]      != '\0'      ||
+         m_buf.substr(m_buf.size()-count) != c_badfood;
+
+      EXPECT(strict_buf_bad_food == false);
+   }
+};
+
+template<typename Fn>
+void for_random_data(size_t divisibleBy, Fn f)
+{
+   srand(0); //magic seed)
+
+   std::string data;
+
+   for (size_t i = 0; i < 10000; ++i)
+   {
+      const char ch = rand() % 256;
+      data += ch;
+
+      if (data.size() % divisibleBy == 0)
+      {
+         f(data);
+      }
+   }
 }
 
 const lest::test specification[] =
@@ -49,13 +73,115 @@ const lest::test specification[] =
       EXPECT(z85::encode(string("\x86\x4F\xD2\x6F\xB5\x59\xF7\x5B")) == "HelloWorld");
    },
 
+   "Test strict buffer", []
+   {
+      {
+         strict_buf buf_holder(0);
+         char* buf = buf_holder.p();
+
+         EXPECT(buf[-1] != '\0');
+         EXPECT(buf[0]  == '\0');
+         EXPECT(buf[1]  != '\0');
+      }
+      {
+         strict_buf buf_holder(1);
+         char* buf = buf_holder.p();
+
+         EXPECT(buf[-1] != '\0');
+         EXPECT(buf[0]  == '\0');
+         EXPECT(buf[1]  == '\0');
+         EXPECT(buf[2]  != '\0');
+      }
+   },
+
+   "Test unsafe", []
+   {
+      auto test = [](const string& bin, const string& txt)
+      {
+         strict_buf txt_buf(txt.size());
+         strict_buf bin_buf(bin.size());
+
+         char* txt_end = Z85_encode_unsafe(bin.c_str(), bin.c_str() + bin.size(), txt_buf.p());
+         char* bin_end = Z85_decode_unsafe(txt_buf.p(), txt_end, bin_buf.p());
+
+         EXPECT((txt_end - txt_buf.p()) == (int)txt.size());
+         EXPECT((bin_end - bin_buf.p()) == (int)bin.size());
+         return bin_buf.str() == bin && txt_buf.str() == txt;
+      };
+
+      EXPECT(test("", ""));
+      EXPECT(test("\x86\x4F\xD2\x6F\xB5\x59\xF7\x5B", "HelloWorld"));
+      EXPECT(test("\x8E\x0B\xDD\x69\x76\x28\xB9\x1D\x8F\x24\x55\x87\xEE\x95\xC5\xB0"
+                  "\x4D\x48\x96\x3F\x79\x25\x98\x77\xB4\x9C\xD9\x06\x3A\xEA\xD3\xB7",
+                  "JTKVSB%%)wK0E.X)V>+}o?pNmC{O&4W4b!Ni{Lh6"));
+   },
+
    "Test no padding", []
    {
-      test_nopadding("", 0, "");
-      test_nopadding("\x86\x4F\xD2\x6F\xB5\x59\xF7\x5B", 8, "HelloWorld");
-      test_nopadding("\x8E\x0B\xDD\x69\x76\x28\xB9\x1D\x8F\x24\x55\x87\xEE\x95\xC5\xB0"
-                     "\x4D\x48\x96\x3F\x79\x25\x98\x77\xB4\x9C\xD9\x06\x3A\xEA\xD3\xB7",
-                     32, "JTKVSB%%)wK0E.X)V>+}o?pNmC{O&4W4b!Ni{Lh6");
+      auto test = [](const string& bin, const string& txt)
+      {
+         strict_buf txt_buf(txt.size());
+         strict_buf bin_buf(bin.size());
+
+         size_t txt_written = Z85_encode(bin.c_str(), txt_buf.p(), bin.size());
+         size_t bin_written = Z85_decode(txt_buf.p(), bin_buf.p(), txt_written);
+
+         EXPECT(txt_written == txt.size());
+         EXPECT(bin_written == bin.size());
+         return bin_buf.str() == bin && txt_buf.str() == txt;
+      };
+
+      EXPECT(test("", ""));
+      EXPECT(test("\x86\x4F\xD2\x6F", "Hello"));
+      EXPECT(test("\x86\x4F\xD2\x6F\xB5\x59\xF7\x5B", "HelloWorld"));
+      EXPECT(test("\x8E\x0B\xDD\x69\x76\x28\xB9\x1D\x8F\x24\x55\x87\xEE\x95\xC5\xB0"
+                  "\x4D\x48\x96\x3F\x79\x25\x98\x77\xB4\x9C\xD9\x06\x3A\xEA\xD3\xB7",
+                  "JTKVSB%%)wK0E.X)V>+}o?pNmC{O&4W4b!Ni{Lh6"));
+   },
+
+   "Test with padding", []
+   {
+      auto test = [](const string& bin, const string& txt)
+      {
+         strict_buf txt_buf(txt.size());
+         strict_buf bin_buf(bin.size());
+
+         size_t txt_written = Z85_encode_with_padding(bin.c_str(), txt_buf.p(), bin.size());
+         size_t bin_written = Z85_decode_with_padding(txt_buf.p(), bin_buf.p(), txt_written);
+
+         EXPECT(txt_written == txt.size());
+         EXPECT(bin_written == bin.size());
+         return bin_buf.str() == bin && txt_buf.str() == txt;
+      };
+
+      EXPECT(test("", ""));
+//!!! ABORT TRAP, CHECK THIS      EXPECT(test("\x86\x4F\xD2\x6F\xB5\x59\xF7\x5B", "HelloWorld"));
+      EXPECT(test("\x86\x4F\xD2\x6F\xB5\x59\xF7\x5B", "4HelloWorld"));
+      EXPECT(test("\x8E\x0B\xDD\x69\x76\x28\xB9\x1D\x8F\x24\x55\x87\xEE\x95\xC5\xB0"
+                  "\x4D\x48\x96\x3F\x79\x25\x98\x77\xB4\x9C\xD9\x06\x3A\xEA\xD3\xB7",
+                  "4JTKVSB%%)wK0E.X)V>+}o?pNmC{O&4W4b!Ni{Lh6"));
+   },
+
+   "Test no padding roundtrip", []
+   {
+      for_random_data(4, [](const string& bin)
+      {
+         const string txt     = z85::encode(bin);
+         const string new_bin = z85::decode(txt);
+
+         EXPECT(new_bin == bin);
+      });
+   },
+
+   "Test with padding roundtrip", []
+   {
+      for_random_data(1, [](const string& bin)
+      {
+         const string txt     = z85::encode_with_padding(bin);
+         const string new_bin = z85::decode_with_padding(txt);
+
+         EXPECT(new_bin == bin);
+      });
    },
 
    "Test Z85_encode_bound()", []
