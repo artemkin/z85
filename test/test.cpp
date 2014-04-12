@@ -27,14 +27,14 @@ public:
       return &m_buf[0] + c_badfood.size();
    }
 
-   std::string str() const
+   std::string data() const
    {
       size_t count = c_badfood.size();
 
       return m_buf.substr(count, m_buf.size() - 2 * count - 1);
    }
 
-   ~strict_buf()
+   void check_buffer()
    {
       size_t count = c_badfood.size();
 
@@ -46,6 +46,14 @@ public:
       EXPECT(strict_buf_bad_food == false);
    }
 };
+
+template<typename Fn>
+void with_strict_buf(size_t bufSize, Fn f)
+{
+   strict_buf buf(bufSize);
+   f(buf);
+   buf.check_buffer();
+}
 
 template<typename Fn>
 void for_random_data(size_t divisibleBy, Fn f)
@@ -98,68 +106,76 @@ const lest::test specification[] =
    {
       auto test = [](const string& bin, const string& txt)
       {
-         strict_buf txt_buf(txt.size());
-         strict_buf bin_buf(bin.size());
+         with_strict_buf(txt.size(), [&](strict_buf& txt_buf) {
+         with_strict_buf(bin.size(), [&](strict_buf& bin_buf) {
 
          char* txt_end = Z85_encode_unsafe(bin.c_str(), bin.c_str() + bin.size(), txt_buf.p());
          char* bin_end = Z85_decode_unsafe(txt_buf.p(), txt_end, bin_buf.p());
 
          EXPECT((txt_end - txt_buf.p()) == (int)txt.size());
          EXPECT((bin_end - bin_buf.p()) == (int)bin.size());
-         return bin_buf.str() == bin && txt_buf.str() == txt;
+         EXPECT(bin_buf.data() == bin);
+         EXPECT(txt_buf.data() == txt);
+
+         });});
       };
 
-      EXPECT(test("", ""));
-      EXPECT(test("\x86\x4F\xD2\x6F\xB5\x59\xF7\x5B", "HelloWorld"));
-      EXPECT(test("\x8E\x0B\xDD\x69\x76\x28\xB9\x1D\x8F\x24\x55\x87\xEE\x95\xC5\xB0"
-                  "\x4D\x48\x96\x3F\x79\x25\x98\x77\xB4\x9C\xD9\x06\x3A\xEA\xD3\xB7",
-                  "JTKVSB%%)wK0E.X)V>+}o?pNmC{O&4W4b!Ni{Lh6"));
+      test("", "");
+      test("\x86\x4F\xD2\x6F\xB5\x59\xF7\x5B", "HelloWorld");
+      test("\x8E\x0B\xDD\x69\x76\x28\xB9\x1D\x8F\x24\x55\x87\xEE\x95\xC5\xB0"
+           "\x4D\x48\x96\x3F\x79\x25\x98\x77\xB4\x9C\xD9\x06\x3A\xEA\xD3\xB7",
+           "JTKVSB%%)wK0E.X)V>+}o?pNmC{O&4W4b!Ni{Lh6");
    },
 
    "Test no padding", []
    {
       auto test = [](const string& bin, const string& txt)
       {
-         strict_buf txt_buf(txt.size());
-         strict_buf bin_buf(bin.size());
+         with_strict_buf(txt.size(), [&](strict_buf& txt_buf) {
+         with_strict_buf(bin.size(), [&](strict_buf& bin_buf) {
 
          size_t txt_written = Z85_encode(bin.c_str(), txt_buf.p(), bin.size());
          size_t bin_written = Z85_decode(txt_buf.p(), bin_buf.p(), txt_written);
 
          EXPECT(txt_written == txt.size());
          EXPECT(bin_written == bin.size());
-         return bin_buf.str() == bin && txt_buf.str() == txt;
+         EXPECT(bin_buf.data() == bin);
+         EXPECT(txt_buf.data() == txt);
+
+         });});
       };
 
-      EXPECT(test("", ""));
-      EXPECT(test("\x86\x4F\xD2\x6F", "Hello"));
-      EXPECT(test("\x86\x4F\xD2\x6F\xB5\x59\xF7\x5B", "HelloWorld"));
-      EXPECT(test("\x8E\x0B\xDD\x69\x76\x28\xB9\x1D\x8F\x24\x55\x87\xEE\x95\xC5\xB0"
-                  "\x4D\x48\x96\x3F\x79\x25\x98\x77\xB4\x9C\xD9\x06\x3A\xEA\xD3\xB7",
-                  "JTKVSB%%)wK0E.X)V>+}o?pNmC{O&4W4b!Ni{Lh6"));
+      test("", "");
+      test("\x86\x4F\xD2\x6F", "Hello");
+      test("\x86\x4F\xD2\x6F\xB5\x59\xF7\x5B", "HelloWorld");
+      test("\x8E\x0B\xDD\x69\x76\x28\xB9\x1D\x8F\x24\x55\x87\xEE\x95\xC5\xB0"
+           "\x4D\x48\x96\x3F\x79\x25\x98\x77\xB4\x9C\xD9\x06\x3A\xEA\xD3\xB7",
+           "JTKVSB%%)wK0E.X)V>+}o?pNmC{O&4W4b!Ni{Lh6");
    },
 
    "Test with padding", []
    {
       auto test = [](const string& bin, const string& txt)
       {
-         strict_buf txt_buf(txt.size());
-         strict_buf bin_buf(bin.size());
+         with_strict_buf(txt.size(), [&](strict_buf& txt_buf) {
+         with_strict_buf(bin.size(), [&](strict_buf& bin_buf) {
 
          size_t txt_written = Z85_encode_with_padding(bin.c_str(), txt_buf.p(), bin.size());
          size_t bin_written = Z85_decode_with_padding(txt_buf.p(), bin_buf.p(), txt_written);
 
          EXPECT(txt_written == txt.size());
          EXPECT(bin_written == bin.size());
-         return bin_buf.str() == bin && txt_buf.str() == txt;
+         EXPECT(bin_buf.data() == bin);
+         EXPECT(txt_buf.data() == txt);
+
+         });});
       };
 
-      EXPECT(test("", ""));
-//!!! ABORT TRAP, CHECK THIS      EXPECT(test("\x86\x4F\xD2\x6F\xB5\x59\xF7\x5B", "HelloWorld"));
-      EXPECT(test("\x86\x4F\xD2\x6F\xB5\x59\xF7\x5B", "4HelloWorld"));
-      EXPECT(test("\x8E\x0B\xDD\x69\x76\x28\xB9\x1D\x8F\x24\x55\x87\xEE\x95\xC5\xB0"
-                  "\x4D\x48\x96\x3F\x79\x25\x98\x77\xB4\x9C\xD9\x06\x3A\xEA\xD3\xB7",
-                  "4JTKVSB%%)wK0E.X)V>+}o?pNmC{O&4W4b!Ni{Lh6"));
+      test("", "");
+      test("\x86\x4F\xD2\x6F\xB5\x59\xF7\x5B", "4HelloWorld");
+      test("\x8E\x0B\xDD\x69\x76\x28\xB9\x1D\x8F\x24\x55\x87\xEE\x95\xC5\xB0"
+           "\x4D\x48\x96\x3F\x79\x25\x98\x77\xB4\x9C\xD9\x06\x3A\xEA\xD3\xB7",
+           "4JTKVSB%%)wK0E.X)V>+}o?pNmC{O&4W4b!Ni{Lh6");
    },
 
    "Test no padding roundtrip", []
