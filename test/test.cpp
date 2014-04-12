@@ -1,4 +1,6 @@
 
+#include <cstring>
+
 #include "lest.hpp"
 #include "z85.h"
 #include "z85.hpp"
