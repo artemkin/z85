@@ -49,7 +49,7 @@ const lest::test specification[] =
       EXPECT(z85::encode(string("\x86\x4F\xD2\x6F\xB5\x59\xF7\x5B")) == "HelloWorld");
    },
 
-   "Test unsafe", []
+   "Test no padding", []
    {
       test_nopadding("", 0, "");
       test_nopadding("\x86\x4F\xD2\x6F\xB5\x59\xF7\x5B", 8, "HelloWorld");
@@ -57,6 +57,68 @@ const lest::test specification[] =
                      "\x4D\x48\x96\x3F\x79\x25\x98\x77\xB4\x9C\xD9\x06\x3A\xEA\xD3\xB7",
                      32, "JTKVSB%%)wK0E.X)V>+}o?pNmC{O&4W4b!Ni{Lh6");
    },
+
+   "Test Z85_encode_bound()", []
+   {
+      char buf[1300];
+      std::string input;
+      for (size_t i = 0; i < 1000; i += 4)
+      {
+         const size_t estimate = Z85_encode_bound(input.size());
+         const size_t encoded = Z85_encode(input.c_str(), buf, input.size());
+         EXPECT(estimate == encoded);
+         input += i       % 256;
+         input += (i + 1) % 256;
+         input += (i + 2) % 256;
+         input += (i + 3) % 256;
+      }
+   },
+
+   "Test Z85_decode_bound()", []
+   {
+      char buf[1300];
+      std::string input;
+      for (size_t i = 0; i < 1000; i += 5)
+      {
+         const size_t estimate = Z85_decode_bound(input.size());
+         const size_t decoded = Z85_decode(input.c_str(), buf, input.size());
+         EXPECT(estimate == decoded);
+         input += i       % 256;
+         input += (i + 1) % 256;
+         input += (i + 2) % 256;
+         input += (i + 3) % 256;
+         input += (i + 4) % 256;
+      }
+   },
+
+   "Test Z85_encode_with_padding_bound()", []
+   {
+      char buf[1300];
+      std::string input;
+      for (size_t i = 0; i < 1000; ++i)
+      {
+         const size_t estimate = Z85_encode_with_padding_bound(input.size());
+         const size_t encoded = Z85_encode_with_padding(input.c_str(), buf, input.size());
+         EXPECT(estimate == encoded);
+         input += i % 256;
+      }
+   },
+
+   "Test Z85_decode_with_padding_bound()", []
+   {
+      char buf[1300];
+      char buf2[1300];
+      std::string input;
+      for (size_t i = 0; i < 1000; ++i)
+      {
+         const size_t encoded = Z85_encode_with_padding(input.c_str(), buf, input.size());
+         const size_t estimate = Z85_decode_with_padding_bound(buf, encoded);
+         const size_t decoded = Z85_decode_with_padding(buf, buf2, encoded);
+         EXPECT(estimate == decoded);
+         input += i % 256;
+      }
+   }
+
 };
 
 int main()
