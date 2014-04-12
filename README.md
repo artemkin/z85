@@ -5,12 +5,14 @@ Z85
 [![Coverage Status](https://coveralls.io/repos/artemkin/z85/badge.png?branch=master)](https://coveralls.io/r/artemkin/z85?branch=master)
 
 Z85 is a binary-to-text encoding library. 
-It implements [ZeroMQ Base-85 Encoding Algorithm](http://rfc.zeromq.org/spec:32/Z85) and provides custom padding. Z85 is written in Pure C.
+It implements [ZeroMQ Base-85 Encoding Algorithm](http://rfc.zeromq.org/spec:32/Z85) and provides custom padding. Z85 is written in C and C++.
 
 Install
 -------
 
 Just grab <code>z85.h</code> and <code>z85.c</code> to your project, compile and link.
+
+Don't forget to take <code>z85.hpp</code> and <code>z85_impl.cpp</code> if you need C++ interface.
 
 Usage
 -----
