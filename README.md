@@ -120,7 +120,7 @@ Original Z85 algorithm can't encode byte sequence that length is not divisible b
 we pad the input remainder with '\0' bytes, encode the whole input with original algorithm and save a number of significat bytes 
 in the reminder. '4' means no padding was even applied. '1', '2', '3' and '4' are possible values.
 
-See <code>[z85.h](https://github.com/artemkin/z85/blob/master/z85.h)</code> for more details. It is well commented, so you can figure out
+See <code>[z85.h](https://github.com/artemkin/z85/blob/master/src/z85.h)</code> for more details. It is well commented, so you can figure out
 how to decode padded string by yourself.
 
 Good luck!
