@@ -1,6 +1,7 @@
 
 #include <cstring>
 #include <cstdlib>
+#include <cstddef>
 
 #include "lest.hpp"
 #include "z85.h"
@@ -259,8 +260,49 @@ const lest::test specification[] =
          EXPECT(estimate == decoded);
          input += i % 256;
       }
-   }
+   },
 
+   "Test Z85_encode()/Z85_decode() wrong input", []
+   {
+      char buf[100];
+      EXPECT(Z85_encode(NULL, NULL, 5) == 0);
+      EXPECT(Z85_encode("some binary data", NULL, 5) == 0);
+      EXPECT(Z85_encode("some binary data", buf, 5) == 0);
+      EXPECT(Z85_encode("some binary data", buf, 16) == 20);
+
+      EXPECT(Z85_decode(NULL, NULL, 4) == 0);
+      EXPECT(Z85_decode("some text.", NULL, 4) == 0);
+      EXPECT(Z85_decode("some text.", buf, 4) == 0);
+      EXPECT(Z85_decode("some text.", buf, 10) == 8);
+   },
+
+   "Test Z85_decode_with_padding() wrong tail bytes count", []
+   {
+      char buf[100];
+      EXPECT(Z85_decode_with_padding("0HelloWorld", buf, 11) == 0);
+      EXPECT(Z85_decode_with_padding("5HelloWorld", buf, 11) == 0);
+      EXPECT(Z85_decode_with_padding("AHelloWorld", buf, 11) == 0);
+      EXPECT(Z85_decode_with_padding("4HelloWorld", buf, 11) == 8);
+   },
+
+   "Test wrong input for z85:: functions", []
+   {
+      EXPECT(z85::encode_with_padding(NULL, 0) == "");
+      EXPECT(z85::encode_with_padding("bin", 0) == "");
+      EXPECT(z85::encode_with_padding(NULL, 4) == "");
+
+      EXPECT(z85::decode_with_padding(NULL, 0) == "");
+      EXPECT(z85::decode_with_padding("txt", 0) == "");
+      EXPECT(z85::decode_with_padding(NULL, 5) == "");
+
+      EXPECT(z85::encode(NULL, 0) == "");
+      EXPECT(z85::encode("bin", 0) == "");
+      EXPECT(z85::encode(NULL, 4) == "");
+
+      EXPECT(z85::decode(NULL, 0) == "");
+      EXPECT(z85::decode("txt", 0) == "");
+      EXPECT(z85::decode(NULL, 5) == "");
+   }
 };
 
 int main()
